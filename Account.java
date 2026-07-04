@@ -1,6 +1,6 @@
 package finalproject;
 
-public class account {
+public class Account {
 /**
  * username for this account
  */
