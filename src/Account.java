@@ -1,4 +1,4 @@
-package finalproject;
+
 
 public class Account {
 /**
@@ -22,7 +22,8 @@ public class Account {
 /**
  * Pathing to user's financial data.
  */
-	private String pathToUserInfo;
+	//This may no longer be needed, depending on how the storage team handles it
+	//private String pathToUserInfo;
 	
 /**
  * Create new account with the specific details
@@ -33,12 +34,11 @@ public class Account {
  * @param pathToUserInfo File path to user's info
  * @author Sakif
  */
-	public account(String username, String hashedPassword, String secretQuestion, String secretAnswer, String pathToUserInfo) {
+	public Account(String username, String hashedPassword, String secretQuestion, String secretAnswer) {
 		this.username = username;
 		this.hashedPassword = hashedPassword;
 		this.secretQuestion = secretQuestion;
 		this.secretAnswer = secretAnswer;
-		this.pathToUserInfo = pathToUserInfo;
 	}
 /**
  * Get username that belongs to the account.
@@ -88,21 +88,5 @@ public class Account {
  */
 	public String getSecretAnswer() {
 		return secretAnswer;
-	}
-/**
- * Get the file path to user financial data
- * @return Path to user data
- * @author Sakif
- */
-	public String getPathToUserInfo() {
-		return pathToUserInfo;
-	}
-/**
- * Set path to user's financial data
- * @param pathToUserInfo New path to set
- * @author Sakif
- */
-	public void setPathToUserInfo(String pathToUserInfo) {
-		this.pathToUserInfo = pathToUserInfo;
 	}
 }
