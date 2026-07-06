@@ -128,12 +128,14 @@ public class Validation
 	/**
 	 * Checks to see if the date is in the proper format and represents a valid month, date, and year
 	 *@param date takes in the date as a String object
+     *@param recordIndex the line number of the data record being currently read from the .csv file 
 	 *@return Returns true if date is in the correct format MM/DD/YYYY and checks to see if the date is valid
+ 
 	 *@author David Guanga
 	 * */
-	private static boolean isValidDateFormat(String date)
+	private static boolean isValidDateFormat(String date, int recordIndex)
     {
-        String[] dateArr = date.split("//");
+        String[] dateArr = date.split("/");
         int month = 0, day = 0, year = 0;
         try
         {
@@ -150,6 +152,7 @@ public class Validation
         }
         catch(NumberFormatException e)
         {
+            System.out.println("Invalid date format at the " + recordIndex + " data entry in the file" );
             return false;
         }
 	}
@@ -157,21 +160,29 @@ public class Validation
 	/**
 	 * Checks to see if the year of each entry of the .csv file is the same
 	 *@param year the year of the given .csv file 
+     *@param yearToCheck the year given by a data entry to check to see if both are equal
+     *@param recordIndex the line number of the data record being currently read from the .csv file 
 	 *@return Returns true if the passed date is of the same year as all the other dates 
 	 *@author David Guanga
 	 * */
-	public static boolean isSameYear(String year) {
-		return false;
+	public static boolean isSameYear(final String year, String yearToCheck, int recordIndex) 
+    {
+        boolean isSameYear = year.equals(yearToCheck);
+        if(!isSameYear)
+            System.out.println("Invalid year at the " + recordIndex + " data entry. The year must match the year of the file name.");
+
+        return isSameYear;
 	}
 
 	/**
 	 * Checks to see if the category matches one of the accepted categories 
 	 *@param categ the name of the category to validate
+     *@param recordIndex the line number of the data record being currently read from the .csv file 
 	 *@return Returns true if the input category is one of the following: Compensation, Allowance, Investments,
 	 *Home, Utilities, Food, Appearance, Work, Education, Transportation, Entertainment, Professional Services, Other
 	 *@author David Guanga
 	 * */
-	private static boolean isValidCategory(String categ)
+	private static boolean isValidCategory(String categ, int recordIndex)
     {
     //TODO:Try to make categories its own type so that categories that are either expenses or income can be easily distinguished and
     //add to 
@@ -188,18 +199,40 @@ public class Validation
         {
             check = categ.equalsIgnoreCase(validCategories[i]);
         }
+
+        if(!check)
+        {
+            System.out.println("Invalid category at the " + recordIndex + " data entry in the file");
+        }
+
         return check;
     }
 
 	/**
 	 * Checks to see if the amounts can be converted to a number
-	 *@param am the amount to process and validate
+	 *@param amount the amount to process and validate
+     *@param recordIndex the line number of the data record being currently read from the .csv file 
 	 *@return Returns true if the String am can be converted into a number 
 	 *@author David Guanga
 	 * */
-	private static boolean isValidAmount(String am){
-        
-		return false;
+	private static boolean isValidAmount(String amount, int recordIndex)
+    {
+        try
+        {
+            double tempAmount = Double.parseDouble(amount);
+            int dollarAmount = (int)tempAmount;
+            double cents = tempAmount - dollarAmount;
+
+            if(cents > 0.001)
+                System.out.println("Truncating amount in " + recordIndex + " data entry to the nearest dollar");
+            return true;
+        }
+        catch(Exception e)
+        {
+            System.out.println("Invalid amount at the " + recordIndex + " data entry in the file.\n"
+            + "Only dollar amount is accepted");
+            return false;
+        }
 	}
 
 	/**
