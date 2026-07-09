@@ -249,7 +249,13 @@ public class Validation
             return false;
         }
 	}
-
+	/**
+	 *Sets the column titles to check for in the header of the .csv file 
+	 *@param categories sets the array of valid column titles for the header 
+     *@return nothing 
+     *@author David Guanga
+     * */
+	
     public static void setValidCategories(String[] categories)
     {
         Validation.validCategories = categories;
