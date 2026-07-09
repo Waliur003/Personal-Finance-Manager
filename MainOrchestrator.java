@@ -44,12 +44,44 @@ final class MenuUtil {
     private MenuUtil() {
     }
 
-    public static String promptChoice(Scanner scanner, String prompt, List<String> options) {
-        return null;
-    }
+   public static String promptChoice(Scanner scanner, String prompt, List<String> options) {
+    while (true) {
+        System.out.println(prompt);
 
-    public static boolean promptYesNo(Scanner scanner, String prompt) {
-        return false;
+        for (int i = 0; i < options.size(); i++) {
+            System.out.println((i + 1) + ". " + options.get(i));
+        }
+
+        System.out.print("Enter choice: ");
+        String input = scanner.nextLine().trim();
+
+        try {
+            int choice = Integer.parseInt(input);
+
+            if (choice >= 1 && choice <= options.size()) {
+                return options.get(choice - 1);
+            }
+        } catch (NumberFormatException e) {
+            
+        }
+
+        System.err.println("Invalid choice. Please try again.");
+    }
+}
+public static boolean promptYesNo(Scanner scanner, String prompt) {
+    while (true) {
+        System.out.print(prompt + " (y/n): ");
+        String input = scanner.nextLine().trim().toLowerCase();
+
+        if (input.equals("y") || input.equals("yes")) {
+            return true;
+        }
+
+        if (input.equals("n") || input.equals("no")) {
+            return false;
+        }
+
+        System.err.println("Please enter y or n.");
     }
 }
 
