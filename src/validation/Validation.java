@@ -1,7 +1,14 @@
 package validation;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.util.regex.Pattern;
 
 /**
  * Provides static methods for validating user input and CSV file data
@@ -23,6 +30,22 @@ import java.time.LocalDate;
 public class Validation
 {
     private static String[] validCategories;
+
+    /** Required CSV header line, per the PFM functional specification. */
+    public static final String VALID_HEADER = "Date,Category,Amount";
+
+    /** Earliest year accepted in a PFM file name. */
+    public static final int MIN_YEAR = 1900;
+
+    /** Latest year accepted in a PFM file name. */
+    public static final int MAX_YEAR = 2100;
+
+    /** Pattern for a base file name of the form YYYY.csv. */
+    private static final Pattern FILE_NAME_PATTERN =
+            Pattern.compile("^\\d{4}\\.csv$", Pattern.CASE_INSENSITIVE);
+
+    /** Unicode byte-order mark sometimes present at the start of CSV files. */
+    private static final String BOM = "﻿";
 
 
 	/**
@@ -87,7 +110,25 @@ public class Validation
      * @author Tasfia Rahman
      */
     public static boolean isValidFileName(String fileName) {
-        return false; // TODO: implement
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return false;
+        }
+        Path path;
+        try {
+            path = Paths.get(fileName.trim());
+        } catch (Exception e) {
+            return false; // malformed path (e.g., illegal characters)
+        }
+        Path base = path.getFileName();
+        if (base == null) {
+            return false;
+        }
+        String baseName = base.toString();
+        if (!FILE_NAME_PATTERN.matcher(baseName).matches()) {
+            return false;
+        }
+        int year = Integer.parseInt(baseName.substring(0, 4));
+        return year >= MIN_YEAR && year <= MAX_YEAR;
     }
 
     /**
@@ -100,7 +141,20 @@ public class Validation
      * @author Tasfia Rahman
      */
     public static boolean isValidCsvFile(String fileName) {
-        return false; // TODO: implement
+        if (!isValidFileName(fileName)) {
+            return false;
+        }
+        Path path = Paths.get(fileName.trim());
+        if (!Files.isRegularFile(path) || !Files.isReadable(path)) {
+            return false;
+        }
+        try (BufferedReader reader =
+                Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            String headerLine = reader.readLine();
+            return headerLine != null && isValidHeader(headerLine);
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     /**
@@ -117,7 +171,14 @@ public class Validation
      * @author Tasfia Rahman
      */
     public static boolean isValidHeader(String headerLine) {
-        return false; // TODO: implement
+        if (headerLine == null) {
+            return false;
+        }
+        String cleaned = headerLine.trim();
+        if (cleaned.startsWith(BOM)) {
+            cleaned = cleaned.substring(1).trim();
+        }
+        return cleaned.equalsIgnoreCase(VALID_HEADER);
     }
 
     /**
@@ -135,7 +196,16 @@ public class Validation
      * @author Tasfia Rahman
      */
     public static boolean fileExistsForYear(String directory, int year) {
-        return false; // TODO: implement
+        if (directory == null || year < MIN_YEAR || year > MAX_YEAR) {
+            return false;
+        }
+        Path candidate;
+        try {
+            candidate = Paths.get(directory, year + ".csv");
+        } catch (Exception e) {
+            return false;
+        }
+        return Files.isRegularFile(candidate);
     }
 
 	/**
