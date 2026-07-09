@@ -6,14 +6,12 @@ package storage;
  *
  * @author Mohammed, Ayub, Fuad
  */
-public class AccountFileManager {
+public final class AccountFileManager {
 
     /**
-     * Constructs a new {@code AccountFileManager} instance.
-     *
-     * @author Mohammed, Ayub, Fuad
+     * Private constructor prevents this utility class from being instantiated.
      */
-    public AccountFileManager() {
+    private AccountFileManager() {
     }
 
     /**
@@ -23,7 +21,7 @@ public class AccountFileManager {
      * @param password the account password to persist (will be obfuscated)
      * @author Mohammed, Ayub, Fuad
      */
-    public void saveAccount(String username, String password) {
+    public static void saveAccount(String username, String password) {
     }
 
     /**
@@ -33,7 +31,7 @@ public class AccountFileManager {
      * @return the loaded account data, or {@code null} if not found
      * @author Mohammed, Ayub, Fuad
      */
-    public Object loadAccount(String username) {
+    public static Object loadAccount(String username) {
         return null;
     }
 
@@ -43,7 +41,7 @@ public class AccountFileManager {
      * @param username the username identifying the account
      * @author Mohammed, Ayub, Fuad
      */
-    public void deleteAccount(String username) {
+    public static void deleteAccount(String username) {
     }
 
     /**
@@ -53,7 +51,7 @@ public class AccountFileManager {
      * @return {@code true} if an account exists, {@code false} otherwise
      * @author Mohammed, Ayub, Fuad
      */
-    public boolean accountExists(String username) {
+    public static boolean accountExists(String username) {
         return false;
     }
 
@@ -64,7 +62,7 @@ public class AccountFileManager {
      * @return the obfuscated password
      * @author Mohammed, Ayub, Fuad
      */
-    public String obfuscatePassword(String plainTextPassword) {
+    public static String obfuscatePassword(String plainTextPassword) {
         return null;
     }
 
@@ -76,7 +74,7 @@ public class AccountFileManager {
      * @return the plaintext password
      * @author Mohammed, Ayub, Fuad
      */
-    public String deobfuscatePassword(String obfuscatedPassword) {
+    public static String deobfuscatePassword(String obfuscatedPassword) {
         return null;
     }
 }
