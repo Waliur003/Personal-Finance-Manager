@@ -36,7 +36,6 @@ public class Account {
  * @param hashedPassword 
  * @param secretQuestion A security question for recovery
  * @param secretAnswer The answer to the security question
- * @param pathToUserInfo File path to user's info
  * @author Sakif
  */
 	public Account(String username, String hashedPassword, String secretQuestion, String secretAnswer) {

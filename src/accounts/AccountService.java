@@ -11,12 +11,16 @@ import java.util.Scanner;
 
    public class AccountService {
 	   
+	   private AccountService() {}
+	   
 	/**
 	 * Manages the current user session. Tracks
 	 * the logged-in user and authentication status.
 	 * @author Sakif
 	 */
-	public static class SessionManager{
+	 static class SessionManager{
+		 
+		private SessionManager() {}
 		//current logged in user or null if no one is logged in 
 		private static Account currentUser;
 		private static boolean isAuthenticated;
