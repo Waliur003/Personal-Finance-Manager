@@ -50,51 +50,94 @@ public class Validation
 
 	/**
      * Validates a user's username.
+	 * Requirements:
+	 * - Cannot be null
+	 * - Must be between 4 and 20 characters
+	 * - May contain only letters, digits, and underscores
      *
      * @param username the username entered by the user
      * @return true if the username satisfies all username requirements;
      *         otherwise false
      * @author Selina Zhu
      */
-    public static boolean isValidUsername(String username) {
-        return false;
-    }
+    public static boolean isValidUsername(String username)
+	{
+    	if (username == null)
+        	return false;
+
+    	username = username.trim();
+
+    	return username.matches("^[A-Za-z0-9_]{4,20}$");
+	}
 
     /**
      * Validates a user's password.
+	 * Requirements:
+	 * - Cannot be null
+  	 * - At least 8 characters
+ 	 * - Contains at least one uppercase letter
+ 	 * - Contains at least one lowercase letter
+ 	 * - Contains at least one digit
      *
      * @param password the password entered by the user
      * @return true if the password satisfies all password requirements;
      *         otherwise false
      * @author Selina Zhu
      */
-    public static boolean isValidPassword(String password) {
-        return false;
-    }
+    public static boolean isValidPassword(String password)
+	{
+    	if (password == null)
+        	return false;
+
+    	return password.matches(
+        	"^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$");
+	}
 
     /**
      * Validates the user's secret question.
+	 * Requirements:
+ 	 * - Cannot be null
+ 	 * - Between 10 and 100 characters
+ 	 * - Cannot be blank
      *
      * @param secretQuestion the secret question entered by the user
      * @return true if the secret question is valid;
      *         otherwise false
      * @author Selina Zhu
      */
-    public static boolean isValidSecretQuestion(String secretQuestion) {
-        return false;
-    }
+    public static boolean isValidSecretQuestion(String secretQuestion)
+	{
+    	if (secretQuestion == null)
+        	return false;
+
+    	secretQuestion = secretQuestion.trim();
+
+    	return secretQuestion.length() >= 10
+        	&& secretQuestion.length() <= 100;
+	}
 
     /**
      * Validates the user's secret answer.
+	 * Requirements:
+ 	 * - Cannot be null
+ 	 * - Between 2 and 100 characters
+ 	 * - Cannot be blank
      *
      * @param secretAnswer the secret answer entered by the user
      * @return true if the secret answer is valid;
      *         otherwise false
      * @author Selina Zhu
      */
-    public static boolean isValidSecretAnswer(String secretAnswer) {
-        return false;
-    }
+    public static boolean isValidSecretAnswer(String secretAnswer)
+	{
+    	if (secretAnswer == null)
+        	return false;
+
+    	secretAnswer = secretAnswer.trim();
+
+    	return secretAnswer.length() >= 2
+        	&& secretAnswer.length() <= 100;
+	}
 
 	/**
      * Checks whether a file name follows the required YYYY.csv pattern.
