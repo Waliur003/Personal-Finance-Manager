@@ -1,123 +1,138 @@
-package insights_fixed;
+package insights;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Map;
+import java.util.List;
 
 /**
- * Formats, prints, and exports the final insights report.
+ * Calculates high-level budget statistics such as income, expenses,
+ * net balance, and budget status.
+ *
+ * Each transaction must contain:
+ * Date, Category, Amount
+ *
+ * Amounts:
+ * Positive = Income
+ * Negative = Expense
  *
  * @author Waliur Sun
  */
-public class InsightReport {
+public class BudgetStatistics {
+
+    /** Index of the amount column in a transaction row. */
+    private static final int AMOUNT_INDEX = 2;
 
     /**
-     * Constructs a new, stateless insight report formatter.
-     */
-    public InsightReport() {
-    }
-
-    /**
-     * Creates a readable text summary of the insights.
+     * Calculates the total yearly income.
      *
-     * @param result calculated insight result
-     * @return formatted report text
-     * Author: Waliur Sun
+     * @param transactions list of transaction rows
+     * @return total income
      */
-    public String generateSummary(InsightResult result) {
-        validateResult(result);
+    public int calculateTotalIncome(List<String[]> transactions) {
 
-        StringBuilder summary = new StringBuilder();
+        validateTransactions(transactions);
 
-        summary.append("===== Financial Insights for ").append(result.year()).append(" =====\n\n");
-        summary.append("Total Income: $").append(result.totalIncome()).append("\n");
-        summary.append("Total Expenses: $").append(result.totalExpenses()).append("\n");
-        summary.append("Net Balance: $").append(result.netBalance()).append("\n");
-        summary.append("Budget Status: ").append(result.budgetStatus()).append("\n");
-        summary.append("Average Monthly Spending: $")
-                .append(String.format("%.2f", result.averageMonthlySpending()))
-                .append("\n\n");
+        int totalIncome = 0;
 
-        summary.append("Monthly Net Totals:\n");
-        for (Map.Entry<Integer, Integer> entry : result.monthlyTotals().entrySet()) {
-            summary.append("Month ").append(entry.getKey())
-                    .append(": $").append(entry.getValue()).append("\n");
-        }
+        for (String[] transaction : transactions) {
+            int amount = parseAmount(transaction);
 
-        summary.append("\nExpense Category Totals and Percentages:\n");
-        for (Map.Entry<String, Integer> entry : result.categoryTotals().entrySet()) {
-            double percentage = result.categoryPercentages().getOrDefault(entry.getKey(), 0.0);
-            summary.append(entry.getKey())
-                    .append(": $").append(entry.getValue())
-                    .append(" (").append(String.format("%.2f", percentage)).append("%)\n");
-        }
-
-        summary.append("\nRecommendations:\n");
-        for (String recommendation : result.recommendations()) {
-            summary.append("- ").append(recommendation).append("\n");
-        }
-
-        return summary.toString();
-    }
-
-    /**
-     * Prints the insight report to the console.
-     *
-     * @param result calculated insight result
-     * Author: Waliur Sun
-     */
-    public void printReport(InsightResult result) {
-        System.out.println(generateSummary(result));
-    }
-
-    /**
-     * Saves the insight report to a CSV file.
-     *
-     * @param result calculated insight result
-     * @param filePath destination file path
-     * @throws IOException if the file cannot be written
-     * Author: Waliur Sun
-     */
-    public void saveReportToCSV(InsightResult result, String filePath) throws IOException {
-        validateResult(result);
-        if (filePath == null || filePath.isBlank()) {
-            throw new IllegalArgumentException("File path cannot be blank.");
-        }
-
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
-            writer.println("Section,Name,Amount,Percentage");
-            writer.println("Summary,Total Income," + result.totalIncome() + ",");
-            writer.println("Summary,Total Expenses," + result.totalExpenses() + ",");
-            writer.println("Summary,Net Balance," + result.netBalance() + ",");
-            writer.println("Summary,Budget Status," + result.budgetStatus() + ",");
-            writer.println("Summary,Average Monthly Spending," + String.format("%.2f", result.averageMonthlySpending()) + ",");
-
-            for (Map.Entry<Integer, Integer> entry : result.monthlyTotals().entrySet()) {
-                writer.println("Monthly,Month " + entry.getKey() + "," + entry.getValue() + ",");
-            }
-
-            for (Map.Entry<String, Integer> entry : result.categoryTotals().entrySet()) {
-                double percentage = result.categoryPercentages().getOrDefault(entry.getKey(), 0.0);
-                writer.println("Category," + entry.getKey() + "," + entry.getValue() + ","
-                        + String.format("%.2f", percentage));
-            }
-
-            for (String recommendation : result.recommendations()) {
-                writer.println("Recommendation,\"" + recommendation.replace("\"", "\"\"") + "\",,");
+            if (amount > 0) {
+                totalIncome += amount;
             }
         }
+
+        return totalIncome;
     }
 
     /**
-     * Validates that the result is not null.
+     * Calculates the total yearly expenses.
      *
-     * @param result calculated insight result
-     * Author: Waliur Sun
+     * Expenses are returned as a positive value.
+     *
+     * @param transactions list of transaction rows
+     * @return total expenses
      */
-    private void validateResult(InsightResult result) {
-        if (result == null) {
-            throw new IllegalArgumentException("Insight result cannot be null.");
+    public int calculateTotalExpenses(List<String[]> transactions) {
+
+        validateTransactions(transactions);
+
+        int totalExpenses = 0;
+
+        for (String[] transaction : transactions) {
+
+            int amount = parseAmount(transaction);
+
+            if (amount < 0) {
+                totalExpenses += Math.abs(amount);
+            }
+        }
+
+        return totalExpenses;
+    }
+
+    /**
+     * Calculates the net yearly balance.
+     *
+     * @param totalIncome total income
+     * @param totalExpenses total expenses
+     * @return net balance
+     */
+    public int calculateNetBalance(int totalIncome, int totalExpenses) {
+        return totalIncome - totalExpenses;
+    }
+
+    /**
+     * Determines the budget status.
+     *
+     * @param netBalance yearly net balance
+     * @return budget status
+     */
+    public BudgetStatus determineBudgetStatus(int netBalance) {
+
+        if (netBalance > 0) {
+            return BudgetStatus.SURPLUS;
+        }
+
+        if (netBalance < 0) {
+            return BudgetStatus.DEFICIT;
+        }
+
+        return BudgetStatus.BALANCED;
+    }
+
+    /**
+     * Validates the transaction list.
+     *
+     * @param transactions list of transactions
+     */
+    private void validateTransactions(List<String[]> transactions) {
+
+        if (transactions == null) {
+            throw new IllegalArgumentException(
+                    "Transaction list cannot be null.");
+        }
+    }
+
+    /**
+     * Parses the amount field.
+     *
+     * @param transaction transaction row
+     * @return amount
+     */
+    private int parseAmount(String[] transaction) {
+
+        if (transaction == null || transaction.length <= AMOUNT_INDEX) {
+            throw new IllegalArgumentException(
+                    "Each transaction must contain Date, Category, and Amount.");
+        }
+
+        try {
+            return Integer.parseInt(transaction[AMOUNT_INDEX].trim());
+        }
+        catch (NumberFormatException exception) {
+
+            throw new IllegalArgumentException(
+                    "Invalid amount: " + transaction[AMOUNT_INDEX],
+                    exception);
         }
     }
 }

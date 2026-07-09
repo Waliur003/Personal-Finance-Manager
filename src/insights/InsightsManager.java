@@ -1,126 +1,235 @@
-package insights_fixed;
+package insights;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Calculates high-level budget statistics such as income, expenses, and net balance.
+ * Main controller for the Insights module.
  *
- * <p>Each transaction row is expected to contain three values in this order:
- * Date, Category, Amount. Amount is positive for income and negative for expenses.</p>
+ * <p>This class coordinates all calculations performed by the
+ * Insights module and serves as the entry point used by the
+ * Integration Team.</p>
  *
  * @author Waliur Sun
  */
-public class BudgetStatistics {
+public class InsightsManager {
 
-    /** Index of the amount column within a transaction row. */
-    private static final int AMOUNT_INDEX = 2;
+    /** Performs overall budget calculations. */
+    private final BudgetStatistics budgetStatistics;
+
+    /** Performs spending analysis. */
+    private final SpendingAnalyzer spendingAnalyzer;
+
+    /** Generates financial recommendations. */
+    private final RecommendationEngine recommendationEngine;
+
+    /** Formats and exports reports. */
+    private final InsightReport insightReport;
 
     /**
-     * Constructs a new, stateless budget statistics calculator.
+     * Creates a new InsightsManager.
      */
-    public BudgetStatistics() {
+    public InsightsManager() {
+
+        budgetStatistics = new BudgetStatistics();
+        spendingAnalyzer = new SpendingAnalyzer();
+        recommendationEngine = new RecommendationEngine();
+        insightReport = new InsightReport();
     }
 
     /**
-     * Calculates the total income from all positive transaction amounts.
+     * Generates a complete yearly insight report.
      *
-     * @param transactions list of transaction rows
-     * @return total income
-     * Author: Waliur Sun
+     * @param transactions yearly transaction list
+     * @return completed InsightResult
      */
-    public int calculateTotalIncome(List<String[]> transactions) {
+    public InsightResult generateInsights(
+            List<String[]> transactions) {
+
         validateTransactions(transactions);
 
-        int totalIncome = 0;
-        for (String[] transaction : transactions) {
-            int amount = parseAmount(transaction);
-            if (amount > 0) {
-                totalIncome += amount;
-            }
-        }
-        return totalIncome;
+        int year = extractYear(transactions);
+
+        int totalIncome =
+                budgetStatistics.calculateTotalIncome(transactions);
+
+        int totalExpenses =
+                budgetStatistics.calculateTotalExpenses(transactions);
+
+        int netBalance =
+                budgetStatistics.calculateNetBalance(
+                        totalIncome,
+                        totalExpenses);
+
+        BudgetStatus budgetStatus =
+                budgetStatistics.determineBudgetStatus(
+                        netBalance);
+
+        Map<Integer, Integer> monthlyTotals =
+                spendingAnalyzer.calculateMonthlyTotals(
+                        transactions);
+
+        Map<String, Integer> categoryTotals =
+                spendingAnalyzer.calculateCategoryTotals(
+                        transactions);
+
+        Map<String, Double> categoryPercentages =
+                spendingAnalyzer.calculateCategoryPercentages(
+                        categoryTotals,
+                        totalExpenses);
+
+        double averageMonthlySpending =
+                spendingAnalyzer.calculateAverageMonthlySpending(
+                        totalExpenses);
+
+        List<String> recommendations =
+                recommendationEngine.generateRecommendations(
+                        budgetStatus,
+                        netBalance,
+                        categoryPercentages);
+
+        return new InsightResult(
+                year,
+                totalIncome,
+                totalExpenses,
+                netBalance,
+                budgetStatus,
+                monthlyTotals,
+                categoryTotals,
+                categoryPercentages,
+                averageMonthlySpending,
+                recommendations);
     }
 
     /**
-     * Calculates the total expenses from all negative transaction amounts.
+     * Returns the formatted yearly report.
      *
-     * <p>The returned value is positive. For example, expenses of -500 and -300
-     * return 800, not -800.</p>
-     *
-     * @param transactions list of transaction rows
-     * @return total expenses as a positive number
-     * Author: Waliur Sun
+     * @param transactions yearly transaction list
+     * @return report text
      */
-    public int calculateTotalExpenses(List<String[]> transactions) {
-        validateTransactions(transactions);
+    public String analyzeYear(
+            List<String[]> transactions) {
 
-        int totalExpenses = 0;
-        for (String[] transaction : transactions) {
-            int amount = parseAmount(transaction);
-            if (amount < 0) {
-                totalExpenses += Math.abs(amount);
-            }
-        }
-        return totalExpenses;
+        InsightResult result =
+                generateInsights(transactions);
+
+        return insightReport.generateSummary(result);
     }
 
     /**
-     * Calculates the net balance for the year.
+     * Prints the report to the console.
      *
-     * @param totalIncome total yearly income
-     * @param totalExpenses total yearly expenses as a positive number
-     * @return income minus expenses
-     * Author: Waliur Sun
+     * @param transactions yearly transaction list
      */
-    public int calculateNetBalance(int totalIncome, int totalExpenses) {
-        return totalIncome - totalExpenses;
+    public void displayInsights(
+            List<String[]> transactions) {
+
+        InsightResult result =
+                generateInsights(transactions);
+
+        insightReport.printReport(result);
     }
 
     /**
-     * Determines if the budget ended in surplus, deficit, or balance.
+     * Exports the report to a CSV file.
      *
-     * @param netBalance income minus expenses
-     * @return budget status
-     * Author: Waliur Sun
+     * @param transactions yearly transaction list
+     * @param filePath destination file
+     * @throws IOException if export fails
      */
-    public BudgetStatus determineBudgetStatus(int netBalance) {
-        if (netBalance > 0) {
-            return BudgetStatus.SURPLUS;
-        }
-        if (netBalance < 0) {
-            return BudgetStatus.DEFICIT;
-        }
-        return BudgetStatus.BALANCED;
+    public void exportInsights(
+            List<String[]> transactions,
+            String filePath)
+            throws IOException {
+
+        InsightResult result =
+                generateInsights(transactions);
+
+        insightReport.saveReportToCSV(
+                result,
+                filePath);
     }
 
     /**
-     * Validates that the transaction list is not null.
+     * Ensures the transaction list is valid.
      *
-     * @param transactions list of transaction rows
-     * Author: Waliur Sun
+     * @param transactions transaction list
      */
-    private void validateTransactions(List<String[]> transactions) {
+    private void validateTransactions(
+            List<String[]> transactions) {
+
         if (transactions == null) {
-            throw new IllegalArgumentException("Transaction list cannot be null.");
+            throw new IllegalArgumentException(
+                    "Transaction list cannot be null.");
+        }
+
+        if (transactions.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Transaction list cannot be empty.");
         }
     }
 
     /**
-     * Parses the amount field safely.
+     * Extracts the year from the first transaction.
      *
-     * @param transaction one transaction row
-     * @return parsed amount
-     * Author: Waliur Sun
+     * Expected format:
+     *
+     * MM/DD/YYYY
+     *
+     * @param transactions transaction list
+     * @return budget year
      */
-    private int parseAmount(String[] transaction) {
-        if (transaction == null || transaction.length <= AMOUNT_INDEX) {
-            throw new IllegalArgumentException("Each transaction must contain Date, Category, and Amount.");
+    private int extractYear(
+            List<String[]> transactions) {
+
+        String date =
+                transactions.get(0)[0];
+
+        String[] parts =
+                date.split("/");
+
+        if (parts.length != 3) {
+            throw new IllegalArgumentException(
+                    "Invalid date format.");
         }
 
-        try {
-            return Integer.parseInt(transaction[AMOUNT_INDEX].trim());
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("Amount must be a whole dollar integer: " + transaction[AMOUNT_INDEX], exception);
-        }
+        return Integer.parseInt(parts[2]);
+    }
+
+    /**
+     * Returns the BudgetStatistics object.
+     *
+     * @return BudgetStatistics
+     */
+    public BudgetStatistics getBudgetStatistics() {
+        return budgetStatistics;
+    }
+
+    /**
+     * Returns the SpendingAnalyzer object.
+     *
+     * @return SpendingAnalyzer
+     */
+    public SpendingAnalyzer getSpendingAnalyzer() {
+        return spendingAnalyzer;
+    }
+
+    /**
+     * Returns the RecommendationEngine object.
+     *
+     * @return RecommendationEngine
+     */
+    public RecommendationEngine getRecommendationEngine() {
+        return recommendationEngine;
+    }
+
+    /**
+     * Returns the InsightReport object.
+     *
+     * @return InsightReport
+     */
+    public InsightReport getInsightReport() {
+        return insightReport;
     }
 }

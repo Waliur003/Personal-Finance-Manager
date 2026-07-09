@@ -1,5 +1,7 @@
 package reports;
 
+import java.text.NumberFormat;
+import java.util.Locale;
 /**
  * Formats report data for display in the Personal Finance Manager (PFM)
  * application.
@@ -11,30 +13,30 @@ package reports;
  * </p>
  *
  * @author Alyssa Johnson
- * @version 1.0
+ * @author Tahsin Abid
+ * @version 1.1
  * @since 1.0
  */
 public class ReportFormatter {
 
     /**
-     * Constructs a new ReportFormatter object.
+     * Constructs a new ReportFormatter object and initializes the US currency formatter.
      */
+    private final NumberFormat currencyFormatter;
+
     public ReportFormatter() {
-
-        // TODO: Initialize formatter if needed.
-
+    currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US);
     }
 
     /**
      * Formats monetary values for display.
      *
-     * <p>
-     * Applies a consistent currency format to report values.
-     * </p>
+     * @param amount amount to format
+     * @return formatted currency string
+     *
      */
-    public void formatCurrency() {
-
-        // TODO: Format currency values.
+    public String formatCurrency(double amount) {
+        return currencyFormatter.format(amount);
 
     }
 
@@ -44,10 +46,18 @@ public class ReportFormatter {
      * <p>
      * Creates consistent headers for all reports.
      * </p>
+     *
+     * @param title report title
+     * @return formatted header
      */
-    public void formatHeader() {
+    public String formatHeader(String title) {
+        String line = "=".repeat(40);
+        return line + "\n"
+                +title.toUpperCase()
+                +"\n"
+                +line;
 
-        // TODO: Format report headers.
+
 
     }
 
@@ -56,11 +66,20 @@ public class ReportFormatter {
      *
      * <p>
      * Organizes monthly income, expenses, and balances.
-     * </p>
+     *</p>
+     *
+     * @param month month name
+     * @param income monthly income
+     * @param expenses monthly expenses
+     * @return formatted monthly report line
+     *
      */
-    public void formatMonthlyData() {
-
-        // TODO: Format monthly report data.
+    public String formatMonthlyData(String month, double income, double expenses) {
+        double balance = income + expenses;
+        return String.format(
+                "%-12s Income: %-12s Expenses: %-12s Balance: %s",
+                month, formatCurrency(income), formatCurrency(expenses), formatCurrency(balance)
+        );
 
     }
 
@@ -70,10 +89,15 @@ public class ReportFormatter {
      * <p>
      * Organizes category totals into a readable layout.
      * </p>
+     *
+     * @param category category name
+     * @param total yearly total
+     * @return formatted category line
+     * </p>
      */
-    public void formatCategoryData() {
+    public String formatCategoryData(String category, double total) {
 
-        // TODO: Format category totals.
+        return String.format("%-20s %s", category, formatCurrency(total));
 
     }
 
@@ -83,10 +107,23 @@ public class ReportFormatter {
      * <p>
      * Formats the final report section displaying surplus or deficit.
      * </p>
+     *
+     * @param income total income
+     * @param expenses total expenses
+     * @return formatted budget summary
      */
-    public void formatBudgetSummary() {
-
-        // TODO: Format budget summary.
+    public String formatBudgetSummary(double income, double expenses) {
+        double balance = income + expenses;
+        String status;
+        if(balance > 0){
+            status = "Surplus";}
+        else if (balance < 0){
+            status = "Defecit";}
+        else{
+            status = "Balanced";
+        }
+    return "income: " + formatCurrency(income) + "\nexpenses: " + formatCurrency(expenses)
+            + "\nBalance: " + formatCurrency(balance) + "\nStatus: " + status;
 
     }
 
