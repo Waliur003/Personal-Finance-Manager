@@ -18,7 +18,7 @@ import java.util.Scanner;
 	 * the logged-in user and authentication status.
 	 * @author Sakif
 	 */
-	 static class SessionManager{
+	 public static class SessionManager{
 		 
 		private SessionManager() {}
 		//current logged in user or null if no one is logged in 
