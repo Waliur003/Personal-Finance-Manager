@@ -21,9 +21,16 @@ import java.util.List;
 public class BudgetStorage {
 
     /**
-     * The base directory where budget files are stored.
+     * Shared file-system utility used to resolve paths relative to the
+     * application's data directory.
      */
-    private static final Path BASE_DIRECTORY = Path.of("data", "budgets");
+    private static final FileUtil FILE_UTIL = new FileUtil();
+
+    /**
+     * The base directory where budget files are stored, resolved under
+     * the application's shared data directory.
+     */
+    private static final Path BASE_DIRECTORY = FILE_UTIL.resolvePath("budgets");
 
     /**
      * The required CSV header for budget files.
@@ -278,8 +285,9 @@ public class BudgetStorage {
      */
     private void ensureBaseDirectoryExists() {
         try {
+            FILE_UTIL.ensureDataDirectoryExists();
             Files.createDirectories(BASE_DIRECTORY);
-        } catch (IOException e) {
+        } catch (IOException | IllegalStateException e) {
             System.err.println("Error creating budget directory: " + e.getMessage());
         }
     }
