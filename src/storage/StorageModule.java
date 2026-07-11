@@ -33,7 +33,6 @@ public class StorageModule implements AppModule {
     private BudgetStorage budgetStorage;
     private CsvImporter csvImporter;
     private CsvExporter csvExporter;
-    private FileUtil fileUtil;
 
     /**
      * Constructs a new {@code StorageModule}. No heavy setup here —
@@ -68,7 +67,7 @@ public class StorageModule implements AppModule {
         budgetStorage = new BudgetStorage();
         csvImporter = new CsvImporter();
         csvExporter = new CsvExporter();
-        fileUtil = new FileUtil();
+        FileUtil fileUtil = new FileUtil();
 
         fileUtil.ensureDataDirectoryExists();
     }
