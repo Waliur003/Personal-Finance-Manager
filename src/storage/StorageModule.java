@@ -4,7 +4,9 @@ import accounts.Account;
 import accounts.AccountService;
 import integration.AppModule;
 import integration.MenuUtil;
+import validation.Validation;
 
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -29,6 +31,14 @@ public class StorageModule implements AppModule {
      * rather than the raw {@code MenuOptions} constant name.
      */
     private static final String MODULE_NAME = "storage";
+
+    /**
+     * Sentinel returned by {@link #promptForYear()} to signal the user
+     * cancelled instead of entering a year. {@code 0} is a safe choice
+     * since {@link Validation#MIN_YEAR} is 1900, so it can never collide
+     * with a real budget year.
+     */
+    private static final int CANCEL_YEAR = 0;
 
     private BudgetStorage budgetStorage;
     private CsvImporter csvImporter;
@@ -136,6 +146,10 @@ public class StorageModule implements AppModule {
      */
     private void handleViewBudget(String username) {
         int year = promptForYear();
+        if (year == CANCEL_YEAR) {
+            System.out.println("Cancelled.");
+            return;
+        }
 
         if (!budgetStorage.yearExists(username, year)) {
             System.out.println("No budget found for " + year + ".");
@@ -151,9 +165,16 @@ public class StorageModule implements AppModule {
     }
 
     /**
-     * Prompts for a CSV file path and target year, parses and filters the
-     * file's transactions, then merges them into that year's budget
-     * (creating the budget if it doesn't already exist).
+     * Prompts for a CSV file path, parses and filters its transactions,
+     * then merges them into the budget for the year encoded in the file
+     * name (creating the budget if it doesn't already exist).
+     *
+     * @bug Previously prompted for the year separately from the file
+     * path, even though the app already requires budget CSV files to be
+     * named {@code YYYY.csv} (see {@link Validation#isValidFileName}).
+     * That redundant prompt was also the entry point for the "0 means
+     * cancel" data-corruption bug documented on {@link #promptForYear()}
+     * — the year is now read directly from the file name instead.
      *
      * @param username the logged-in user's username
      * @author Mohammed, Ayub, Fuad
@@ -161,11 +182,12 @@ public class StorageModule implements AppModule {
     private void handleImportCsv(String username) {
         String filePath = MenuUtil.promptString("Path to CSV file");
 
-        // NOTE: once Validation.isValidFileName()/isValidCsvFile() are
-        // implemented, gate the import behind those checks, e.g.:
-        //   if (!Validation.isValidCsvFile(filePath)) { ... reject ... }
-        // Both are currently stubbed to always return false, so wiring
-        // them in now would block every import.
+        if (!Validation.isValidCsvFile(filePath)) {
+            System.out.println("'" + filePath + "' is not a valid budget CSV file. "
+                    + "It must be named YYYY.csv, be readable, and start with the header \""
+                    + Validation.VALID_HEADER + "\".");
+            return;
+        }
 
         List<Transaction> parsed = csvImporter.parseCsvFile(filePath);
         if (parsed == null) {
@@ -179,7 +201,8 @@ public class StorageModule implements AppModule {
             return;
         }
 
-        int year = promptForYear();
+        String baseName = Path.of(filePath).getFileName().toString();
+        int year = Integer.parseInt(baseName.substring(0, 4));
 
         Budget budget = budgetStorage.yearExists(username, year)
                 ? budgetStorage.readBudget(username, year)
@@ -207,6 +230,10 @@ public class StorageModule implements AppModule {
      */
     private void handleExportCsv(String username) {
         int year = promptForYear();
+        if (year == CANCEL_YEAR) {
+            System.out.println("Cancelled.");
+            return;
+        }
 
         if (!budgetStorage.yearExists(username, year)) {
             System.out.println("No budget found for " + year + ".");
@@ -229,6 +256,10 @@ public class StorageModule implements AppModule {
      */
     private void handleDeleteBudget(String username) {
         int year = promptForYear();
+        if (year == CANCEL_YEAR) {
+            System.out.println("Cancelled.");
+            return;
+        }
 
         if (!budgetStorage.yearExists(username, year)) {
             System.out.println("No budget found for " + year + ".");
@@ -246,13 +277,28 @@ public class StorageModule implements AppModule {
     }
 
     /**
-     * Prompts the user to enter a year and parses it as an integer.
+     * Prompts the user to enter a year, or {@code 0} to cancel.
      *
-     * @return the year entered by the user
+     * @bug Previously parsed whatever the user typed as a literal year
+     * with no way to back out. A user backing out of the (since removed)
+     * year prompt in {@link #handleImportCsv(String)} by entering
+     * {@code 0} — mirroring the "0 = back" convention used everywhere
+     * else in the app's menus — had it silently create and persist a
+     * budget for year 0, which then showed up in
+     * {@link #handleListBudgetYears(String)}. {@code 0} is now treated
+     * as an explicit cancel signal instead of a literal year.
+     *
+     * @return the year entered by the user, or {@link #CANCEL_YEAR} if
+     *         the user cancelled or entered something unparseable
      * @author Mohammed, Ayub, Fuad
      */
     private int promptForYear() {
-        String input = MenuUtil.promptString("Enter year");
-        return Integer.parseInt(input);
+        String input = MenuUtil.promptString("Enter year (or 0 to cancel)");
+        try {
+            return Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid year entered.");
+            return CANCEL_YEAR;
+        }
     }
 }
